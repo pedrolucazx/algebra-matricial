@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Gerador de Matrizes</title>
+    <link rel="stylesheet" href="styles/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Gerador de Matrizes</h1>
+
+      <section id="controls" class="controls">
+        <div class="new-matrix-row">
+          <label
+            >Tipo
+            <select
+              id="type-select"
+              class="btn outline"
+              style="padding-right: 30px"
+            >
+              <option value="matrix">Matriz</option>
+              <option value="vector">Vetor</option>
+            </select>
+          </label>
+          <label
+            >Linhas
+            <input type="number" id="init-rows" min="1" value="2" />
+          </label>
+          <label
+            >Colunas
+            <input type="number" id="init-cols" min="1" value="3" />
+          </label>
+          <button id="generate-btn" class="btn">Gerar</button>
+        </div>
+
+        <p class="hint">
+          As entradas aceitam números negativos e decimais. Matrizes nomeadas em
+          ordem alfabética (A, B, ... Z).
+        </p>
+      </section>
+
+      <section id="operations" class="controls" style="margin-top: 20px">
+        <h2 style="margin: 0 0 12px 0; font-size: 18px; color: var(--accent)">
+          Operações
+        </h2>
+        <div class="new-matrix-row">
+          <label
+            >Operação
+            <select
+              id="operation-select"
+              class="btn outline"
+              style="padding-right: 30px"
+            >
+              <option value="">Selecione uma operação</option>
+              <option value="transpose">Transposta</option>
+              <option value="sum">Soma</option>
+              <option value="times">Multiplicação (elemento a elemento)</option>
+              <option value="dot">Multiplicação de Matrizes</option>
+              <option value="gauss">Eliminação Gaussiana</option>
+              <option value="solve">Sistema de Equações</option>
+            </select>
+          </label>
+          <label
+            >Matriz/Vetor A
+            <select
+              id="operand-a-select"
+              class="btn outline"
+              style="padding-right: 30px"
+            >
+              <option value="">Selecione</option>
+            </select>
+          </label>
+          <label id="operand-b-label" style="display: none"
+            >Matriz/Vetor B
+            <select
+              id="operand-b-select"
+              class="btn outline"
+              style="padding-right: 30px"
+            >
+              <option value="">Selecione</option>
+            </select>
+          </label>
+          <div id="scalar-input-container" style="display: none">
+            <label
+              >Escalar
+              <input
+                type="number"
+                id="scalar-input"
+                step="any"
+                placeholder="0"
+              />
+            </label>
+          </div>
+          <button id="execute-operation-btn" class="btn" disabled>
+            Executar
+          </button>
+        </div>
+        <div id="operation-result" style="margin-top: 12px; display: none">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: var(--accent)">
+            Resultado:
+          </h3>
+          <div id="result-display"></div>
+        </div>
+      </section>
+
+      <section id="matrices" class="matrices">
+        <!-- Matrizes renderizadas aqui -->
+      </section>
+    </main>
+
+    <script src="scripts/calc.js"></script>
+    <script src="scripts/main.js"></script>
+  </body>
+</html>
