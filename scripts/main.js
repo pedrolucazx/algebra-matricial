@@ -18,6 +18,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const operationResult = document.getElementById("operation-result");
   const resultDisplay = document.getElementById("result-display");
 
+  // Elementos dos exemplos
+  const loadDemoMatricesBtn = document.getElementById("load-demo-matrices");
+  const loadDemoVectorsBtn = document.getElementById("load-demo-vectors");
+  const loadSystemDemoBtn = document.getElementById("load-system-demo");
+  const clearAllBtn = document.getElementById("clear-all");
+
   let createdObjects = {};
   let nextLetterCode = 65;
   const linearAlgebra = new LinearAlgebra();
@@ -26,6 +32,141 @@ document.addEventListener("DOMContentLoaded", () => {
   const twoOperandOperations = ["sum", "times", "dot"];
   // Operações que aceitam escalar como primeiro operando
   const scalarOperations = ["times"];
+
+  // Função para criar exemplos pré-definidos
+  function loadDemoMatrices() {
+    clearAll();
+
+    // Matriz A (2x3) - igual à demonstração
+    createPredefinedMatrix("A", "matrix", 2, 3, [
+      [1, 2, 3],
+      [4, 5, 6],
+    ]);
+
+    // Matriz B (2x3) - igual à demonstração
+    createPredefinedMatrix("B", "matrix", 2, 3, [
+      [7, 8, 9],
+      [10, 11, 12],
+    ]);
+
+    // Matriz C (3x2) - igual à demonstração
+    createPredefinedMatrix("C", "matrix", 3, 2, [
+      [1, 2],
+      [3, 4],
+      [5, 6],
+    ]);
+
+    showMessage(
+      "Matrizes de demonstração carregadas! Experimente as operações.",
+      "success"
+    );
+  }
+
+  function loadDemoVectors() {
+    clearAll();
+
+    // Vetor X - igual à demonstração
+    createPredefinedMatrix("X", "vector", 1, 3, [[1, 2, 3]]);
+
+    // Vetor Y - igual à demonstração
+    createPredefinedMatrix("Y", "vector", 1, 3, [[4, 5, 6]]);
+
+    // Vetor Z (2D) - igual à demonstração
+    createPredefinedMatrix("Z", "vector", 1, 2, [[1, 2]]);
+
+    showMessage(
+      "Vetores de demonstração carregados! Experimente as operações.",
+      "success"
+    );
+  }
+
+  function loadSystemDemo() {
+    clearAll();
+
+    // Sistema linear da demonstração
+    createPredefinedMatrix("S", "matrix", 3, 4, [
+      [2, 1, -1, 8],
+      [-3, -1, 2, -11],
+      [-2, 1, 2, -3],
+    ]);
+
+    // Sistema com infinitas soluções
+    createPredefinedMatrix("I", "matrix", 2, 3, [
+      [1, 2, 5],
+      [2, 4, 10],
+    ]);
+
+    // Sistema inconsistente
+    createPredefinedMatrix("N", "matrix", 3, 4, [
+      [1, 1, 0, 2],
+      [1, 1, 0, 3],
+      [0, 0, 1, 1],
+    ]);
+
+    showMessage(
+      "Sistemas lineares carregados! S: solução única, I: infinitas soluções, N: inconsistente.",
+      "success"
+    );
+  }
+
+  function createPredefinedMatrix(name, type, rows, cols, data) {
+    createCard(name, type, rows, cols);
+
+    if (type === "matrix") {
+      const elements = data;
+      createdObjects[name] = new Matrix(rows, cols, elements);
+    } else {
+      const elements = data[0];
+      createdObjects[name] = new Vector(cols, elements);
+    }
+
+    // Atualizar visualização
+    const card = document.getElementById(`card-${name}`);
+    const saveBtn = card.querySelector(".btn");
+
+    updateCardDisplay(card, name, type, rows, cols);
+    saveBtn.textContent = "Editar";
+    updateOperandSelects();
+  }
+
+  function clearAll() {
+    createdObjects = {};
+    nextLetterCode = 65;
+    matricesContainer.innerHTML = "";
+    operationResult.style.display = "none";
+    updateOperandSelects();
+  }
+
+  function showMessage(text, type = "success") {
+    const messageClass = type === "error" ? "error-message" : "success-message";
+    const messageDiv = document.createElement("div");
+    messageDiv.className = messageClass;
+    messageDiv.textContent = text;
+
+    // Remover mensagens anteriores
+    const existingMessages = document.querySelectorAll(
+      ".error-message, .success-message"
+    );
+    existingMessages.forEach((msg) => msg.remove());
+
+    // Adicionar nova mensagem
+    document
+      .querySelector(".container")
+      .insertBefore(messageDiv, document.getElementById("matrices"));
+
+    // Remover após 5 segundos
+    setTimeout(() => {
+      if (messageDiv.parentNode) {
+        messageDiv.remove();
+      }
+    }, 5000);
+  }
+
+  // Event listeners para os botões de exemplo
+  loadDemoMatricesBtn.addEventListener("click", loadDemoMatrices);
+  loadDemoVectorsBtn.addEventListener("click", loadDemoVectors);
+  loadSystemDemoBtn.addEventListener("click", loadSystemDemo);
+  clearAllBtn.addEventListener("click", clearAll);
 
   // Atualizar selects de operandos quando objetos são criados/removidos
   function updateOperandSelects() {
@@ -115,57 +256,79 @@ document.addEventListener("DOMContentLoaded", () => {
     const operandB = operandBName ? createdObjects[operandBName] : null;
 
     let result = null;
+    let operationInfo = "";
 
     try {
       switch (operation) {
         case "transpose":
           result = linearAlgebra.transpose(operandA);
+          operationInfo = `Transposta de ${operandAName}`;
           break;
         case "sum":
           if (operandB) {
             result = linearAlgebra.sum(operandA, operandB);
+            operationInfo = `${operandAName} + ${operandBName}`;
           }
           break;
         case "times":
           if (!isNaN(scalar) && scalarInput.value !== "") {
             result = linearAlgebra.times(scalar, operandA);
+            operationInfo = `${scalar} × ${operandAName} (multiplicação escalar)`;
           } else if (operandB) {
             result = linearAlgebra.times(operandA, operandB);
+            operationInfo = `${operandAName} × ${operandBName} (elemento a elemento)`;
           }
           break;
         case "dot":
           if (operandB) {
             result = linearAlgebra.dot(operandA, operandB);
+            operationInfo = `${operandAName} · ${operandBName} (produto matricial)`;
           }
           break;
         case "gauss":
           result = linearAlgebra.gauss(operandA);
+          operationInfo = `Eliminação Gaussiana de ${operandAName}`;
           break;
         case "solve":
           result = linearAlgebra.solve(operandA);
+          operationInfo = `Solução do sistema linear ${operandAName}`;
           break;
       }
 
       if (result) {
-        displayResult(result, operation);
+        displayResult(result, operation, operationInfo);
+        console.log(`Operação ${operation} executada:`, result);
       } else {
-        alert("Erro ao executar a operação. Verifique os parâmetros.");
+        showMessage(
+          "Erro ao executar a operação. Verifique os parâmetros.",
+          "error"
+        );
       }
     } catch (error) {
       console.error("Erro na operação:", error);
-      alert("Erro ao executar a operação: " + error.message);
+      showMessage(`Erro: ${error.message}`, "error");
     }
   });
 
-  // Exibir resultado
-  function displayResult(result, operationName) {
+  // Exibir resultado melhorado
+  function displayResult(result, operationName, operationInfo) {
     resultDisplay.innerHTML = "";
+
+    // Adicionar informação da operação
+    const infoDiv = document.createElement("div");
+    infoDiv.className = "result-operation-info";
+    infoDiv.textContent = operationInfo;
+    resultDisplay.appendChild(infoDiv);
 
     const isMatrix = result instanceof Matrix;
     const isVector = result instanceof Vector;
 
     if (!isMatrix && !isVector) {
-      resultDisplay.textContent = `Resultado: ${result}`;
+      const valueDiv = document.createElement("div");
+      valueDiv.textContent = `Resultado: ${result}`;
+      valueDiv.style.marginTop = "8px";
+      valueDiv.style.fontWeight = "600";
+      resultDisplay.appendChild(valueDiv);
       operationResult.style.display = "block";
       return;
     }
@@ -174,6 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultContainer = document.createElement("div");
     resultContainer.className = "matrix-visual";
     resultContainer.style.justifyContent = "flex-start";
+    resultContainer.style.marginTop = "8px";
 
     const parenLeft = document.createElement("div");
     parenLeft.className = "paren";
@@ -190,7 +354,9 @@ document.addEventListener("DOMContentLoaded", () => {
           cell.className = "element-input";
           cell.style.border = "1px solid transparent";
           cell.style.background = "#f8fafc";
-          cell.textContent = result.get(i, j);
+          cell.style.fontWeight = "500";
+          const value = result.get(i, j);
+          cell.textContent = Number.isInteger(value) ? value : value.toFixed(3);
           grid.appendChild(cell);
         }
       }
@@ -201,7 +367,9 @@ document.addEventListener("DOMContentLoaded", () => {
         cell.className = "element-input";
         cell.style.border = "1px solid transparent";
         cell.style.background = "#f8fafc";
-        cell.textContent = result.get(i);
+        cell.style.fontWeight = "500";
+        const value = result.get(i);
+        cell.textContent = Number.isInteger(value) ? value : value.toFixed(3);
         grid.appendChild(cell);
       }
     }
@@ -215,8 +383,75 @@ document.addEventListener("DOMContentLoaded", () => {
     resultContainer.appendChild(parenRight);
 
     resultDisplay.appendChild(resultContainer);
+
+    // Adicionar informações extras para algumas operações
+    if (operationName === "solve") {
+      const solutionInfo = document.createElement("div");
+      solutionInfo.className = "step-result";
+      solutionInfo.innerHTML = `
+        <div class="step-title">Interpretação da Solução:</div>
+        ${
+          isVector
+            ? result.data
+                .map(
+                  (val, i) =>
+                    `x${i + 1} = ${
+                      Number.isInteger(val) ? val : val.toFixed(3)
+                    }`
+                )
+                .join(", ")
+            : "Resultado não é um vetor"
+        }
+      `;
+      resultDisplay.appendChild(solutionInfo);
+    }
+
+    if (operationName === "gauss") {
+      const gaussInfo = document.createElement("div");
+      gaussInfo.className = "step-result";
+      gaussInfo.innerHTML = `
+        <div class="step-title">Matriz em Forma Escalonada Reduzida:</div>
+        Esta matriz pode ser usada para resolver sistemas lineares ou analisar dependência linear.
+      `;
+      resultDisplay.appendChild(gaussInfo);
+    }
+
     operationResult.style.display = "block";
   }
+
+  function updateCardDisplay(card, name, type, rows, cols) {
+    const visualContainer = card.querySelector(".matrix-visual");
+    const grid = visualContainer.querySelector(".matrix-grid");
+
+    const displayGrid = document.createElement("div");
+    displayGrid.className = "matrix-grid";
+    displayGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    if (type === "matrix") {
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          const cell = document.createElement("span");
+          cell.className = "element-input";
+          cell.style.border = "1px solid transparent";
+          const value = createdObjects[name].get(i, j);
+          cell.textContent = Number.isInteger(value) ? value : value.toFixed(3);
+          displayGrid.appendChild(cell);
+        }
+      }
+    } else {
+      for (let i = 0; i < cols; i++) {
+        const cell = document.createElement("span");
+        cell.className = "element-input";
+        cell.style.border = "1px solid transparent";
+        const value = createdObjects[name].get(i);
+        cell.textContent = Number.isInteger(value) ? value : value.toFixed(3);
+        displayGrid.appendChild(cell);
+      }
+    }
+
+    grid.replaceWith(displayGrid);
+  }
+
   typeSelect.addEventListener("change", () => {
     if (typeSelect.value === "vector") {
       rowsInput.value = 1;
@@ -228,7 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   generateBtn.addEventListener("click", () => {
     if (nextLetterCode > 90) {
-      alert("Limite de matrizes/vetores (A-Z) atingido.");
+      showMessage("Limite de matrizes/vetores (A-Z) atingido.", "error");
       return;
     }
 
@@ -241,7 +476,7 @@ document.addEventListener("DOMContentLoaded", () => {
       (type === "matrix" && (rows < 1 || cols < 1)) ||
       (type === "vector" && cols < 1)
     ) {
-      alert("As dimensões devem ser números positivos.");
+      showMessage("As dimensões devem ser números positivos.", "error");
       return;
     }
 
@@ -284,6 +519,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const input = document.createElement("input");
         input.type = "number";
         input.className = "element-input";
+        input.step = "any";
+        input.placeholder = "0";
         grid.appendChild(input);
         inputs.push(input);
       }
@@ -333,34 +570,16 @@ document.addEventListener("DOMContentLoaded", () => {
           createdObjects[name] = new Vector(cols, elements);
         }
 
-        const displayGrid = document.createElement("div");
-        displayGrid.className = "matrix-grid";
-        displayGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-
-        if (type === "matrix") {
-          for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < cols; j++) {
-              const cell = document.createElement("span");
-              cell.className = "element-input";
-              cell.style.border = "1px solid transparent";
-              cell.textContent = createdObjects[name].get(i, j);
-              displayGrid.appendChild(cell);
-            }
-          }
-        } else {
-          for (let i = 0; i < cols; i++) {
-            const cell = document.createElement("span");
-            cell.className = "element-input";
-            cell.style.border = "1px solid transparent";
-            cell.textContent = createdObjects[name].get(i);
-            displayGrid.appendChild(cell);
-          }
-        }
-
-        grid.replaceWith(displayGrid);
+        updateCardDisplay(card, name, type, rows, cols);
         saveBtn.textContent = "Editar";
         console.log(`Objeto ${name} criado:`, createdObjects[name]);
         updateOperandSelects();
+        showMessage(
+          `${
+            type === "matrix" ? "Matriz" : "Vetor"
+          } ${name} criado com sucesso!`,
+          "success"
+        );
       } else if (saveBtn.textContent === "Salvar" && createdObjects[name]) {
         if (type === "matrix") {
           for (let i = 0; i < rows; i++) {
@@ -376,39 +595,16 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
-        const displayGrid = document.createElement("div");
-        displayGrid.className = "matrix-grid";
-        displayGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-
-        if (type === "matrix") {
-          for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < cols; j++) {
-              const cell = document.createElement("span");
-              cell.className = "element-input";
-              cell.style.border = "1px solid transparent";
-              cell.textContent = createdObjects[name].get(i, j);
-              displayGrid.appendChild(cell);
-            }
-          }
-        } else {
-          for (let i = 0; i < cols; i++) {
-            const cell = document.createElement("span");
-            cell.className = "element-input";
-            cell.style.border = "1px solid transparent";
-            cell.textContent = createdObjects[name].get(i);
-            displayGrid.appendChild(cell);
-          }
-        }
-
-        const currentGrid = visualContainer.querySelector(".matrix-grid");
-        currentGrid.replaceWith(displayGrid);
-
+        updateCardDisplay(card, name, type, rows, cols);
         saveBtn.textContent = "Editar";
-        console.log(
-          `Objeto ${name} atualizado usando SET:`,
-          createdObjects[name]
-        );
+        console.log(`Objeto ${name} atualizado:`, createdObjects[name]);
         updateOperandSelects();
+        showMessage(
+          `${
+            type === "matrix" ? "Matriz" : "Vetor"
+          } ${name} atualizado com sucesso!`,
+          "success"
+        );
       } else if (saveBtn.textContent === "Editar") {
         const editGrid = document.createElement("div");
         editGrid.className = "matrix-grid";
@@ -421,6 +617,7 @@ document.addEventListener("DOMContentLoaded", () => {
               const input = document.createElement("input");
               input.type = "number";
               input.className = "element-input";
+              input.step = "any";
               input.value = createdObjects[name].get(i, j);
               editGrid.appendChild(input);
               newInputs.push(input);
@@ -431,6 +628,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const input = document.createElement("input");
             input.type = "number";
             input.className = "element-input";
+            input.step = "any";
             input.value = createdObjects[name].get(i);
             editGrid.appendChild(input);
             newInputs.push(input);
@@ -450,6 +648,10 @@ document.addEventListener("DOMContentLoaded", () => {
       card.remove();
       delete createdObjects[name];
       updateOperandSelects();
+      showMessage(
+        `${type === "matrix" ? "Matriz" : "Vetor"} ${name} removido.`,
+        "success"
+      );
     });
   }
 });

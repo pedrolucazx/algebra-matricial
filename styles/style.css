@@ -112,6 +112,66 @@ input[type="text"] {
   border: 1px solid #cbd5e0 !important;
 }
 
+/* Error messages */
+.error-message {
+  background: #fed7d7;
+  color: #c53030;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* Success messages */
+.success-message {
+  background: #c6f6d5;
+  color: #22543d;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* Examples section styling */
+#examples .new-matrix-row {
+  gap: 12px;
+}
+
+#examples .btn.outline:hover {
+  background: var(--accent);
+  color: white;
+}
+
+/* Step-by-step result display */
+.step-result {
+  margin-top: 8px;
+  padding: 8px;
+  background: #f0f9ff;
+  border-left: 4px solid var(--accent);
+  border-radius: 4px;
+}
+
+.step-title {
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+/* Improved matrix display in results */
+.result-matrix-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.result-operation-info {
+  font-size: 14px;
+  color: var(--muted);
+  font-style: italic;
+}
+
 /* card for each matrix */
 .matrix-card {
   background: var(--card);

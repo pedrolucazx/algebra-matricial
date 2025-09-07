@@ -53,12 +53,14 @@
               style="padding-right: 30px"
             >
               <option value="">Selecione uma operação</option>
-              <option value="transpose">Transposta</option>
-              <option value="sum">Soma</option>
-              <option value="times">Multiplicação (elemento a elemento)</option>
-              <option value="dot">Multiplicação de Matrizes</option>
+              <option value="transpose">Transposta (A → Aᵀ)</option>
+              <option value="sum">Soma (A + B)</option>
+              <option value="times">
+                Multiplicação Escalar/Elemento (k×A ou A×B)
+              </option>
+              <option value="dot">Produto Matricial (A · B)</option>
               <option value="gauss">Eliminação Gaussiana</option>
-              <option value="solve">Sistema de Equações</option>
+              <option value="solve">Resolver Sistema Linear</option>
             </select>
           </label>
           <label
@@ -102,6 +104,30 @@
           </h3>
           <div id="result-display"></div>
         </div>
+      </section>
+
+      <section id="examples" class="controls" style="margin-top: 20px">
+        <h2 style="margin: 0 0 12px 0; font-size: 18px; color: var(--accent)">
+          Exemplos Pré-definidos
+        </h2>
+        <div class="new-matrix-row">
+          <button id="load-demo-matrices" class="btn outline">
+            Carregar Matrizes de Demonstração
+          </button>
+          <button id="load-demo-vectors" class="btn outline">
+            Carregar Vetores de Demonstração
+          </button>
+          <button id="load-system-demo" class="btn outline">
+            Carregar Sistema Linear
+          </button>
+          <button id="clear-all" class="btn" style="background: var(--danger)">
+            Limpar Tudo
+          </button>
+        </div>
+        <p class="hint">
+          Carregue exemplos pré-definidos para testar todas as operações
+          rapidamente.
+        </p>
       </section>
 
       <section id="matrices" class="matrices">
