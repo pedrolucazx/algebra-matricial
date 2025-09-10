@@ -27,6 +27,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let createdObjects = {};
   let nextLetterCode = 65;
   const linearAlgebra = new LinearAlgebra();
+  // Add a variable to store current operation result
+  let currentOperationResult = null;
 
   // Operações que precisam de dois operandos
   const twoOperandOperations = ["sum", "times", "dot"];
@@ -296,15 +298,18 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (result) {
+        currentOperationResult = result;
         displayResult(result, operation, operationInfo);
         console.log(`Operação ${operation} executada:`, result);
       } else {
+        currentOperationResult = null;
         showMessage(
           "Erro ao executar a operação. Verifique os parâmetros.",
           "error"
         );
       }
     } catch (error) {
+      currentOperationResult = null;
       console.error("Erro na operação:", error);
       showMessage(`Erro: ${error.message}`, "error");
     }
@@ -356,7 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
           cell.style.background = "#f8fafc";
           cell.style.fontWeight = "500";
           const value = result.get(i, j);
-          cell.textContent = Number.isInteger(value) ? value : value.toFixed(3);
+          cell.textContent = value;
           grid.appendChild(cell);
         }
       }
@@ -369,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cell.style.background = "#f8fafc";
         cell.style.fontWeight = "500";
         const value = result.get(i);
-        cell.textContent = Number.isInteger(value) ? value : value.toFixed(3);
+        cell.textContent = value;
         grid.appendChild(cell);
       }
     }
@@ -393,12 +398,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ${
           isVector
             ? result.data
-                .map(
-                  (val, i) =>
-                    `x${i + 1} = ${
-                      Number.isInteger(val) ? val : val.toFixed(3)
-                    }`
-                )
+                .map((val, i) => `X<sub>${i + 1}</sub> = ${val}`)
                 .join(", ")
             : "Resultado não é um vetor"
         }
@@ -409,10 +409,59 @@ document.addEventListener("DOMContentLoaded", () => {
     if (operationName === "gauss") {
       const gaussInfo = document.createElement("div");
       gaussInfo.className = "step-result";
+      function formatEquation(row) {
+        const variables = ["x", "y", "z", "w", "u", "v"];
+        let equation = "";
+        let isFirstTerm = true;
+
+        for (let i = 0; i < row.length - 1; i++) {
+          const coef = row[i];
+
+          if (coef === 0) continue;
+
+          if (coef > 0) {
+            if (isFirstTerm) {
+              equation += `${coef === 1 ? "" : coef}${variables[i]}`;
+            } else {
+              equation += ` + ${coef === 1 ? "" : coef}${variables[i]}`;
+            }
+          } else {
+            if (isFirstTerm) {
+              equation += `-${Math.abs(coef) === 1 ? "" : Math.abs(coef)}${
+                variables[i]
+              }`;
+            } else {
+              equation += ` - ${Math.abs(coef) === 1 ? "" : Math.abs(coef)}${
+                variables[i]
+              }`;
+            }
+          }
+
+          isFirstTerm = false;
+        }
+
+        if (isFirstTerm) {
+          equation = "0";
+        }
+
+        equation += ` = ${row[row.length - 1]}`;
+        return equation;
+      }
+
+      let equationSystem = "";
+      for (let i = 0; i < result.rows; i++) {
+        const row = [];
+        for (let j = 0; j < result.cols; j++) {
+          row.push(result.get(i, j));
+        }
+        equationSystem += formatEquation(row) + "\n";
+      }
+
       gaussInfo.innerHTML = `
-        <div class="step-title">Matriz em Forma Escalonada Reduzida:</div>
-        Esta matriz pode ser usada para resolver sistemas lineares ou analisar dependência linear.
+        <div class="step-title">Sistema de equações após eliminação:</div>
+        <pre>${equationSystem}</pre>
       `;
+
       resultDisplay.appendChild(gaussInfo);
     }
 
@@ -434,7 +483,7 @@ document.addEventListener("DOMContentLoaded", () => {
           cell.className = "element-input";
           cell.style.border = "1px solid transparent";
           const value = createdObjects[name].get(i, j);
-          cell.textContent = Number.isInteger(value) ? value : value.toFixed(3);
+          cell.textContent = value;
           displayGrid.appendChild(cell);
         }
       }
@@ -444,7 +493,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cell.className = "element-input";
         cell.style.border = "1px solid transparent";
         const value = createdObjects[name].get(i);
-        cell.textContent = Number.isInteger(value) ? value : value.toFixed(3);
+        cell.textContent = value;
         displayGrid.appendChild(cell);
       }
     }
@@ -653,5 +702,104 @@ document.addEventListener("DOMContentLoaded", () => {
         "success"
       );
     });
+  }
+
+  document
+    .getElementById("save-result-btn")
+    .addEventListener("click", saveOperationResult);
+
+  function saveOperationResult() {
+    if (!currentOperationResult) {
+      showMessage("Nenhum resultado disponível para salvar", "error");
+      return;
+    }
+
+    const operation = operationSelect.value;
+    const operandAName = operandASelect.value;
+    const operandBName = operandBSelect.value;
+    const scalarValue = scalarInput.value;
+
+    let resultName = "";
+    switch (operation) {
+      case "transpose":
+        resultName = `${operandAName}ᵀ`;
+        break;
+      case "sum":
+        resultName = `${operandAName}+${operandBName}`;
+        break;
+      case "times":
+        if (scalarValue && scalarValue !== "") {
+          resultName = `${scalarValue}×${operandAName}`;
+        } else {
+          resultName = `${operandAName}×${operandBName}`;
+        }
+        break;
+      case "dot":
+        resultName = `${operandAName}·${operandBName}`;
+        break;
+      case "gauss":
+        resultName = `G(${operandAName})`;
+        break;
+      case "solve":
+        resultName = `Sol(${operandAName})`;
+        break;
+      default:
+        resultName = `R${String.fromCharCode(nextLetterCode)}`;
+        nextLetterCode++;
+    }
+
+    resultName = ensureUniqueName(resultName);
+
+    const type = currentOperationResult instanceof Matrix ? "matrix" : "vector";
+
+    if (type === "matrix") {
+      const rows = currentOperationResult.rows;
+      const cols = currentOperationResult.cols;
+      const elements = [];
+
+      for (let i = 0; i < rows; i++) {
+        const rowElements = [];
+        for (let j = 0; j < cols; j++) {
+          rowElements.push(currentOperationResult.get(i, j));
+        }
+        elements.push(rowElements);
+      }
+
+      createPredefinedMatrix(resultName, type, rows, cols, elements);
+    }
+    // For vector, get dimension and elements
+    else if (type === "vector") {
+      const dim = currentOperationResult.dim;
+      const elements = [];
+
+      for (let i = 0; i < dim; i++) {
+        elements.push(currentOperationResult.get(i));
+      }
+
+      createPredefinedMatrix(resultName, type, 1, dim, [elements]);
+    }
+
+    showMessage(
+      `${
+        type === "matrix" ? "Matriz" : "Vetor"
+      } ${resultName} salvo com sucesso!`,
+      "success"
+    );
+    operationResult.style.display = "none";
+  }
+
+  function ensureUniqueName(baseName) {
+    // Get existing matrix names
+    const existingNames = Object.keys(createdObjects);
+
+    let name = baseName;
+    let counter = 1;
+
+    while (existingNames.includes(name)) {
+      name = `${baseName}_${counter}`;
+      counter++;
+    }
+
+    return name;
   }
 });
