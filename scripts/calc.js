@@ -305,13 +305,9 @@ class LinearAlgebra {
 
       if (Math.abs(pivotElement) < 1e-10) {
         if (Math.abs(constantTerm - substitutionSum) < 1e-10) {
-          throw new Error(
-            `Sistema indeterminado: pivot zero na linha ${rowIndex} e RHS compatível -> infinitas soluções`
-          );
+          throw new Error(`Sistema indeterminado`);
         } else {
-          throw new Error(
-            `Sistema inconsistente durante back-substitution (linha ${rowIndex})`
-          );
+          throw new Error(`Sistema inconsistente`);
         }
       }
 
