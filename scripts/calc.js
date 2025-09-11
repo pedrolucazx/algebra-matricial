@@ -190,132 +190,117 @@ class LinearAlgebra {
 
   gauss(inputMatrix) {
     if (!(inputMatrix instanceof Matrix)) {
-      throw new Error("Argumento deve ser uma Matrix");
+      throw new Error("O argumento deve ser uma Matrix");
     }
 
-    const resultMatrix = new Matrix(
-      inputMatrix.rows,
-      inputMatrix.cols,
-      inputMatrix.data
-    );
-    const rowCount = resultMatrix.rows;
-    const columnCount = resultMatrix.cols;
+    const numberOfRows = inputMatrix.rows;
+    const numberOfColumns = inputMatrix.cols;
+    const matrixClone = inputMatrix.data.map((row) => [...row]);
 
-    let currentPivotRow = 0;
     for (
-      let currentPivotCol = 0;
-      currentPivotCol < columnCount && currentPivotRow < rowCount;
-      currentPivotCol++
+      let currentColumn = 0;
+      currentColumn < Math.min(numberOfRows, numberOfColumns - 1);
+      currentColumn++
     ) {
-      let maxElementRow = currentPivotRow;
-      let maxAbsoluteValue = Math.abs(
-        resultMatrix.get(maxElementRow, currentPivotCol)
-      );
+      /*
+       * 1. Encontrar o melhor pivô(linha com maior valor absoluto na coluna atual)
+       */
+      let bestPivotRow = currentColumn;
+      let maxPivotValue = Math.abs(matrixClone[currentColumn][currentColumn]);
+
       for (
-        let rowIndex = currentPivotRow + 1;
-        rowIndex < rowCount;
+        let rowIndex = currentColumn + 1;
+        rowIndex < numberOfRows;
         rowIndex++
       ) {
-        const currentAbsoluteValue = Math.abs(
-          resultMatrix.get(rowIndex, currentPivotCol)
-        );
-        if (currentAbsoluteValue > maxAbsoluteValue) {
-          maxAbsoluteValue = currentAbsoluteValue;
-          maxElementRow = rowIndex;
+        if (Math.abs(matrixClone[rowIndex][currentColumn]) > maxPivotValue) {
+          maxPivotValue = Math.abs(matrixClone[rowIndex][currentColumn]);
+          bestPivotRow = rowIndex;
         }
       }
 
-      if (maxAbsoluteValue < 1e-10) continue;
+      /*
+       * maxPivotValue < 1e-10 (0.0000000001)  significa que o valor do pivô é muito próximo de zero,
+       */
+      if (maxPivotValue < 1e-10) continue;
 
-      if (maxElementRow !== currentPivotRow) {
-        const tempRow = resultMatrix.data[currentPivotRow];
-        resultMatrix.data[currentPivotRow] = resultMatrix.data[maxElementRow];
-        resultMatrix.data[maxElementRow] = tempRow;
+      /*
+       * 2. Trocar linhas (se necessário)
+       */
+      if (bestPivotRow !== currentColumn) {
+        [matrixClone[currentColumn], matrixClone[bestPivotRow]] = [
+          matrixClone[bestPivotRow],
+          matrixClone[currentColumn],
+        ];
       }
 
+      // 3. Eliminação abaixo do pivô
       for (
-        let rowIndex = currentPivotRow + 1;
-        rowIndex < rowCount;
-        rowIndex++
+        let targetRow = currentColumn + 1;
+        targetRow < numberOfRows;
+        targetRow++
       ) {
+        if (Math.abs(matrixClone[targetRow][currentColumn]) < 1e-10) continue;
+
         const eliminationFactor =
-          resultMatrix.get(rowIndex, currentPivotCol) /
-          resultMatrix.get(currentPivotRow, currentPivotCol);
-        if (Math.abs(eliminationFactor) < 1e-10) continue;
-        for (
-          let colIndex = currentPivotCol;
-          colIndex < columnCount;
-          colIndex++
-        ) {
-          const newElementValue =
-            resultMatrix.get(rowIndex, colIndex) -
-            eliminationFactor * resultMatrix.get(currentPivotRow, colIndex);
-          resultMatrix.set(
-            rowIndex,
-            colIndex,
-            Math.abs(newElementValue) < 1e-10 ? 0 : newElementValue
-          );
-        }
-        resultMatrix.set(rowIndex, currentPivotCol, 0);
-      }
+          matrixClone[targetRow][currentColumn] /
+          matrixClone[currentColumn][currentColumn];
 
-      currentPivotRow++;
+        /*
+         * L1 = L1 - fator * L2
+         */
+        for (
+          let elementIndex = currentColumn;
+          elementIndex < numberOfColumns;
+          elementIndex++
+        ) {
+          matrixClone[targetRow][elementIndex] -=
+            eliminationFactor * matrixClone[currentColumn][elementIndex];
+        }
+      }
     }
 
-    return resultMatrix;
+    return new Matrix(numberOfRows, numberOfColumns, matrixClone);
   }
 
   solve(augmentedMatrix) {
-    if (!(augmentedMatrix instanceof Matrix)) {
-      throw new Error("Argumento deve ser uma Matrix");
-    }
+    const totalRows = augmentedMatrix.rows;
+    const totalColumns = augmentedMatrix.cols;
+    const matrixClone = augmentedMatrix.data.map((row) => [...row]);
+    const solutionVector = Array(totalRows).fill(0);
 
-    const equationCount = augmentedMatrix.rows;
-    const augmentedColumnCount = augmentedMatrix.cols;
-    if (augmentedColumnCount !== equationCount + 1) {
-      throw new Error("solve: espera matriz aumentada");
-    }
-
-    for (let rowIndex = 0; rowIndex < equationCount; rowIndex++) {
-      let isRowAllZeros = true;
-      for (let colIndex = 0; colIndex < equationCount; colIndex++) {
-        if (Math.abs(augmentedMatrix.get(rowIndex, colIndex)) > 1e-10) {
-          isRowAllZeros = false;
-          break;
-        }
-      }
-      if (
-        isRowAllZeros &&
-        Math.abs(augmentedMatrix.get(rowIndex, equationCount)) > 1e-10
+    for (let currentRow = totalRows - 1; currentRow >= 0; currentRow--) {
+      let knownTermsSum = 0;
+      for (
+        let variableIndex = currentRow + 1;
+        variableIndex < totalRows;
+        variableIndex++
       ) {
-        throw new Error("Sistema inconsistente");
-      }
-    }
-
-    const solutionVector = new Array(equationCount).fill(0);
-    for (let rowIndex = equationCount - 1; rowIndex >= 0; rowIndex--) {
-      let substitutionSum = 0;
-      for (let colIndex = rowIndex + 1; colIndex < equationCount; colIndex++) {
-        substitutionSum +=
-          augmentedMatrix.get(rowIndex, colIndex) * solutionVector[colIndex];
+        knownTermsSum +=
+          matrixClone[currentRow][variableIndex] *
+          solutionVector[variableIndex];
       }
 
-      const pivotElement = augmentedMatrix.get(rowIndex, rowIndex);
-      const constantTerm = augmentedMatrix.get(rowIndex, equationCount);
+      const diagonalCoefficient = matrixClone[currentRow][currentRow];
+      const constantTerm =
+        matrixClone[currentRow][totalColumns - 1] - knownTermsSum;
 
-      if (Math.abs(pivotElement) < 1e-10) {
-        if (Math.abs(constantTerm - substitutionSum) < 1e-10) {
-          throw new Error(`Sistema indeterminado`);
+      // Verificação de sistema sem solução única
+      if (Math.abs(diagonalCoefficient) < 1e-10) {
+        if (Math.abs(constantTerm) < 1e-10) {
+          throw new Error("Sistema indeterminado (infinitas soluções).");
         } else {
-          throw new Error(`Sistema inconsistente`);
+          throw new Error("Sistema impossível (sem solução).");
         }
       }
 
-      solutionVector[rowIndex] =
-        (constantTerm - substitutionSum) / pivotElement;
+      solutionVector[currentRow] = constantTerm / diagonalCoefficient;
     }
 
-    const solutionMatrixData = solutionVector.map((value) => [value]);
-    return new Matrix(equationCount, 1, solutionMatrixData);
+    return new Matrix(
+      totalRows,
+      1,
+      solutionVector.map((value) => [value])
+    );
   }
 }

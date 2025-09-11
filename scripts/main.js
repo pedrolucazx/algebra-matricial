@@ -405,60 +405,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (operationName === "gauss") {
       const gaussInfo = document.createElement("div");
       gaussInfo.className = "step-result";
-
-      function formatEquation(row, totalCols) {
-        const variables = ["x", "y", "z", "w", "u", "v"];
-        let equation = "";
-        let isFirstTerm = true;
-
-        for (let i = 0; i < totalCols - 1; i++) {
-          const coef = row[i];
-
-          if (Math.abs(coef) < 1e-10) continue;
-
-          if (coef > 0) {
-            if (isFirstTerm) {
-              equation += `${coef === 1 ? "" : coef.toFixed(2)}${variables[i]}`;
-            } else {
-              equation += ` + ${coef === 1 ? "" : coef.toFixed(2)}${
-                variables[i]
-              }`;
-            }
-          } else {
-            if (isFirstTerm) {
-              equation += `-${
-                Math.abs(coef) === 1 ? "" : Math.abs(coef).toFixed(2)
-              }${variables[i]}`;
-            } else {
-              equation += ` - ${
-                Math.abs(coef) === 1 ? "" : Math.abs(coef).toFixed(2)
-              }${variables[i]}`;
-            }
-          }
-
-          isFirstTerm = false;
-        }
-
-        if (isFirstTerm) {
-          equation = "0";
-        }
-
-        equation += ` = ${row[totalCols - 1].toFixed(2)}`;
-        return equation;
-      }
-
-      let equationSystem = "";
-      for (let i = 0; i < result.rows; i++) {
-        const row = [];
-        for (let j = 0; j < result.cols; j++) {
-          row.push(result.get(i, j));
-        }
-        equationSystem += formatEquation(row, result.cols) + "<br>";
-      }
-
       gaussInfo.innerHTML = `
-        <div class="step-title">Sistema de equações após eliminação:</div>
-        <div>${equationSystem}</div>
+        <div class="step-title">Para obter a solução completa do sistema, use a operação 'Resolver Sistema Linear' no menu de operações.</div>
       `;
 
       resultDisplay.appendChild(gaussInfo);
