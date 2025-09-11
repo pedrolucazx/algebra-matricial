@@ -185,175 +185,141 @@ class LinearAlgebra {
       }
       return new Matrix(a.rows, b.cols, resultData);
     }
-
-    if (a instanceof Vector && b instanceof Matrix) {
-      if (a.dim !== b.rows) {
-        throw new Error(
-          `Dimensões incompatíveis para multiplicação vetor-matriz: vetor dimensão ${a.dim} * matriz ${b.rows}x${b.cols}. A dimensão do vetor deve ser igual ao número de linhas da matriz.`
-        );
-      }
-
-      const resultData = [];
-      for (let j = 0; j < b.cols; j++) {
-        let sum = 0;
-        for (let i = 0; i < a.dim; i++) {
-          sum += a.get(i) * b.get(i, j);
-        }
-        resultData[j] = sum;
-      }
-      return new Vector(b.cols, resultData);
-    }
-
-    if (a instanceof Matrix && b instanceof Vector) {
-      if (a.cols !== b.dim) {
-        throw new Error(
-          `Dimensões incompatíveis para multiplicação matriz-vetor: matriz ${a.rows}x${a.cols} * vetor dimensão ${b.dim}. O número de colunas da matriz deve ser igual à dimensão do vetor.`
-        );
-      }
-
-      const resultData = [];
-      for (let i = 0; i < a.rows; i++) {
-        let sum = 0;
-        for (let j = 0; j < a.cols; j++) {
-          sum += a.get(i, j) * b.get(j);
-        }
-        resultData[i] = sum;
-      }
-      return new Vector(a.rows, resultData);
-    }
-
-    if (a instanceof Vector && b instanceof Vector) {
-      if (a.dim !== b.dim) {
-        throw new Error(
-          "Os vetores devem ter a mesma dimensão para multiplicação elemento a elemento"
-        );
-      }
-
-      const resultData = [];
-      for (let i = 0; i < a.dim; i++) {
-        resultData[i] = a.get(i) * b.get(i);
-      }
-      return new Vector(a.dim, resultData);
-    }
-
-    throw new Error("Argumentos devem ser instâncias de Matrix ou Vector");
+    throw new Error("Argumentos devem ser um Matrix");
   }
 
-  gauss(a) {
-    if (!(a instanceof Matrix)) {
-      throw new Error("Argumento deve ser uma instância de Matrix");
+  gauss(inputMatrix) {
+    if (!(inputMatrix instanceof Matrix)) {
+      throw new Error("Argumento deve ser uma Matrix");
     }
 
-    const result = new Matrix(
-      a.rows,
-      a.cols,
-      a.data.map((row) => [...row])
+    const resultMatrix = new Matrix(
+      inputMatrix.rows,
+      inputMatrix.cols,
+      inputMatrix.data
     );
+    const rowCount = resultMatrix.rows;
+    const columnCount = resultMatrix.cols;
 
-    const n = result.rows;
-    const m = result.cols;
-
-    // FASE 1: Zerar elementos abaixo do pivô da primeira coluna
-    let pivotRow = 0;
-    let pivotCol = 0;
-
-    // Validação do pivô
-    if (Math.abs(result.get(pivotRow, pivotCol)) < 1e-10) {
-      // Procurar linha abaixo com elemento não-nulo
-      let found = false;
-      for (let i = pivotRow + 1; i < n; i++) {
-        if (Math.abs(result.get(i, pivotCol)) > 1e-10) {
-          const temp = result.data[pivotRow];
-          result.data[pivotRow] = result.data[i];
-          result.data[i] = temp;
-          found = true;
-          break;
+    let currentPivotRow = 0;
+    for (
+      let currentPivotCol = 0;
+      currentPivotCol < columnCount && currentPivotRow < rowCount;
+      currentPivotCol++
+    ) {
+      let maxElementRow = currentPivotRow;
+      let maxAbsoluteValue = Math.abs(
+        resultMatrix.get(maxElementRow, currentPivotCol)
+      );
+      for (
+        let rowIndex = currentPivotRow + 1;
+        rowIndex < rowCount;
+        rowIndex++
+      ) {
+        const currentAbsoluteValue = Math.abs(
+          resultMatrix.get(rowIndex, currentPivotCol)
+        );
+        if (currentAbsoluteValue > maxAbsoluteValue) {
+          maxAbsoluteValue = currentAbsoluteValue;
+          maxElementRow = rowIndex;
         }
       }
-      if (!found) {
-        throw new Error(
-          "Sistema não possui solução única (pivô zero na coluna 0)"
-        );
+
+      if (maxAbsoluteValue < 1e-10) continue;
+
+      if (maxElementRow !== currentPivotRow) {
+        const tempRow = resultMatrix.data[currentPivotRow];
+        resultMatrix.data[currentPivotRow] = resultMatrix.data[maxElementRow];
+        resultMatrix.data[maxElementRow] = tempRow;
       }
-    }
 
-    // Eliminação abaixo do pivô da primeira coluna
-    for (let i = pivotRow + 1; i < n; i++) {
-      const k = result.get(i, pivotCol) / result.get(pivotRow, pivotCol);
-      for (let j = pivotCol; j < m; j++) {
-        const newValue = result.get(i, j) - k * result.get(pivotRow, j);
-        result.set(i, j, newValue);
-      }
-      // Zerar explicitamente o elemento abaixo do pivô
-      result.set(i, pivotCol, 0);
-    }
-
-    // FASE 2: Zerar elementos abaixo do pivô da segunda coluna
-    pivotRow = 1;
-    pivotCol = 1;
-
-    // Validação do pivô
-    if (Math.abs(result.get(pivotRow, pivotCol)) < 1e-10) {
-      // Procurar linha abaixo com elemento não-nulo
-      let found = false;
-      for (let i = pivotRow + 1; i < n; i++) {
-        if (Math.abs(result.get(i, pivotCol)) > 1e-10) {
-          // Troca de linhas
-          const temp = result.data[pivotRow];
-          result.data[pivotRow] = result.data[i];
-          result.data[i] = temp;
-          found = true;
-          break;
+      for (
+        let rowIndex = currentPivotRow + 1;
+        rowIndex < rowCount;
+        rowIndex++
+      ) {
+        const eliminationFactor =
+          resultMatrix.get(rowIndex, currentPivotCol) /
+          resultMatrix.get(currentPivotRow, currentPivotCol);
+        if (Math.abs(eliminationFactor) < 1e-10) continue;
+        for (
+          let colIndex = currentPivotCol;
+          colIndex < columnCount;
+          colIndex++
+        ) {
+          const newElementValue =
+            resultMatrix.get(rowIndex, colIndex) -
+            eliminationFactor * resultMatrix.get(currentPivotRow, colIndex);
+          resultMatrix.set(
+            rowIndex,
+            colIndex,
+            Math.abs(newElementValue) < 1e-10 ? 0 : newElementValue
+          );
         }
+        resultMatrix.set(rowIndex, currentPivotCol, 0);
       }
-      if (!found) {
-        throw new Error(
-          "Sistema não possui solução única (pivô zero na coluna 1)"
-        );
-      }
+
+      currentPivotRow++;
     }
 
-    // Eliminação abaixo do pivô da segunda coluna
-    for (let i = pivotRow + 1; i < n; i++) {
-      const v = result.get(i, pivotCol) / result.get(pivotRow, pivotCol);
-      for (let j = pivotCol; j < m; j++) {
-        const newValue = result.get(i, j) - v * result.get(pivotRow, j);
-        result.set(i, j, newValue);
-      }
-      // Zerar explicitamente o elemento abaixo do pivô
-      result.set(i, pivotCol, 0);
-    }
-
-    return result;
+    return resultMatrix;
   }
 
-  solve(a) {
-    if (!(a instanceof Matrix)) {
-      throw new Error("Argumento deve ser uma instância de Matrix");
+  solve(augmentedMatrix) {
+    if (!(augmentedMatrix instanceof Matrix)) {
+      throw new Error("Argumento deve ser uma Matrix");
     }
 
-    const n = a.rows;
-    const m = a.cols - 1; // número de variáveis (última coluna é dos termos independentes)
+    const equationCount = augmentedMatrix.rows;
+    const augmentedColumnCount = augmentedMatrix.cols;
+    if (augmentedColumnCount !== equationCount + 1) {
+      throw new Error("solve: espera matriz aumentada");
+    }
 
-    // Verificar inconsistência: linha da forma [0 0 ... 0 | c] onde c ≠ 0
-    for (let i = 0; i < n; i++) {
-      let allZeros = true;
-      for (let j = 0; j < m; j++) {
-        if (Math.abs(a.get(i, j)) > 1e-10) {
-          allZeros = false;
+    for (let rowIndex = 0; rowIndex < equationCount; rowIndex++) {
+      let isRowAllZeros = true;
+      for (let colIndex = 0; colIndex < equationCount; colIndex++) {
+        if (Math.abs(augmentedMatrix.get(rowIndex, colIndex)) > 1e-10) {
+          isRowAllZeros = false;
           break;
         }
       }
-      if (allZeros && Math.abs(a.get(i, m)) > 1e-10) {
-        throw new Error("Sistema inconsistente: não há solução");
+      if (
+        isRowAllZeros &&
+        Math.abs(augmentedMatrix.get(rowIndex, equationCount)) > 1e-10
+      ) {
+        throw new Error("Sistema inconsistente");
       }
     }
 
-    const x3 = a.get(2, 3) / a.get(2, 2);
-    const x2 = (a.get(1, 3) - a.get(1, 2) * x3) / a.get(1, 1);
-    const x1 =
-      (a.get(0, 3) - a.get(0, 2) * x3 - a.get(0, 1) * x2) / a.get(0, 0);
+    const solutionVector = new Array(equationCount).fill(0);
+    for (let rowIndex = equationCount - 1; rowIndex >= 0; rowIndex--) {
+      let substitutionSum = 0;
+      for (let colIndex = rowIndex + 1; colIndex < equationCount; colIndex++) {
+        substitutionSum +=
+          augmentedMatrix.get(rowIndex, colIndex) * solutionVector[colIndex];
+      }
 
-    return new Vector(3, [x1, x2, x3]);
+      const pivotElement = augmentedMatrix.get(rowIndex, rowIndex);
+      const constantTerm = augmentedMatrix.get(rowIndex, equationCount);
+
+      if (Math.abs(pivotElement) < 1e-10) {
+        if (Math.abs(constantTerm - substitutionSum) < 1e-10) {
+          throw new Error(
+            `Sistema indeterminado: pivot zero na linha ${rowIndex} e RHS compatível -> infinitas soluções`
+          );
+        } else {
+          throw new Error(
+            `Sistema inconsistente durante back-substitution (linha ${rowIndex})`
+          );
+        }
+      }
+
+      solutionVector[rowIndex] =
+        (constantTerm - substitutionSum) / pivotElement;
+    }
+
+    const solutionMatrixData = solutionVector.map((value) => [value]);
+    return new Matrix(equationCount, 1, solutionMatrixData);
   }
 }

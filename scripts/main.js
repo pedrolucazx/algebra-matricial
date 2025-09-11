@@ -315,11 +315,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Exibir resultado melhorado
   function displayResult(result, operationName, operationInfo) {
     resultDisplay.innerHTML = "";
 
-    // Adicionar informação da operação
     const infoDiv = document.createElement("div");
     infoDiv.className = "result-operation-info";
     infoDiv.textContent = operationInfo;
@@ -338,7 +336,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Criar visualização similar às matrizes/vetores
     const resultContainer = document.createElement("div");
     resultContainer.className = "matrix-visual";
     resultContainer.style.justifyContent = "flex-start";
@@ -361,7 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
           cell.style.background = "#f8fafc";
           cell.style.fontWeight = "500";
           const value = result.get(i, j);
-          cell.textContent = value;
+          cell.textContent = Number.isInteger(value) ? value : value.toFixed(2);
           grid.appendChild(cell);
         }
       }
@@ -374,7 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cell.style.background = "#f8fafc";
         cell.style.fontWeight = "500";
         const value = result.get(i);
-        cell.textContent = value;
+        cell.textContent = Number.isInteger(value) ? value : value.toFixed(2);
         grid.appendChild(cell);
       }
     }
@@ -389,19 +386,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     resultDisplay.appendChild(resultContainer);
 
-    // Adicionar informações extras para algumas operações
     if (operationName === "solve") {
       const solutionInfo = document.createElement("div");
       solutionInfo.className = "step-result";
+      let solutionText = "";
+      for (let i = 0; i < result.rows; i++) {
+        solutionText += `X<sub>${i + 1}</sub> = ${result.get(i, 0).toFixed(2)}`;
+        if (i < result.rows - 1) solutionText += ", ";
+      }
+
       solutionInfo.innerHTML = `
         <div class="step-title">Interpretação da Solução:</div>
-        ${
-          isVector
-            ? result.data
-                .map((val, i) => `X<sub>${i + 1}</sub> = ${val}`)
-                .join(", ")
-            : "Resultado não é um vetor"
-        }
+        <div>${solutionText}</div>
       `;
       resultDisplay.appendChild(solutionInfo);
     }
@@ -409,31 +405,34 @@ document.addEventListener("DOMContentLoaded", () => {
     if (operationName === "gauss") {
       const gaussInfo = document.createElement("div");
       gaussInfo.className = "step-result";
-      function formatEquation(row) {
+
+      function formatEquation(row, totalCols) {
         const variables = ["x", "y", "z", "w", "u", "v"];
         let equation = "";
         let isFirstTerm = true;
 
-        for (let i = 0; i < row.length - 1; i++) {
+        for (let i = 0; i < totalCols - 1; i++) {
           const coef = row[i];
 
-          if (coef === 0) continue;
+          if (Math.abs(coef) < 1e-10) continue;
 
           if (coef > 0) {
             if (isFirstTerm) {
-              equation += `${coef === 1 ? "" : coef}${variables[i]}`;
+              equation += `${coef === 1 ? "" : coef.toFixed(2)}${variables[i]}`;
             } else {
-              equation += ` + ${coef === 1 ? "" : coef}${variables[i]}`;
+              equation += ` + ${coef === 1 ? "" : coef.toFixed(2)}${
+                variables[i]
+              }`;
             }
           } else {
             if (isFirstTerm) {
-              equation += `-${Math.abs(coef) === 1 ? "" : Math.abs(coef)}${
-                variables[i]
-              }`;
+              equation += `-${
+                Math.abs(coef) === 1 ? "" : Math.abs(coef).toFixed(2)
+              }${variables[i]}`;
             } else {
-              equation += ` - ${Math.abs(coef) === 1 ? "" : Math.abs(coef)}${
-                variables[i]
-              }`;
+              equation += ` - ${
+                Math.abs(coef) === 1 ? "" : Math.abs(coef).toFixed(2)
+              }${variables[i]}`;
             }
           }
 
@@ -444,7 +443,7 @@ document.addEventListener("DOMContentLoaded", () => {
           equation = "0";
         }
 
-        equation += ` = ${row[row.length - 1]}`;
+        equation += ` = ${row[totalCols - 1].toFixed(2)}`;
         return equation;
       }
 
@@ -454,12 +453,12 @@ document.addEventListener("DOMContentLoaded", () => {
         for (let j = 0; j < result.cols; j++) {
           row.push(result.get(i, j));
         }
-        equationSystem += formatEquation(row) + "\n";
+        equationSystem += formatEquation(row, result.cols) + "<br>";
       }
 
       gaussInfo.innerHTML = `
         <div class="step-title">Sistema de equações após eliminação:</div>
-        <pre>${equationSystem}</pre>
+        <div>${equationSystem}</div>
       `;
 
       resultDisplay.appendChild(gaussInfo);
@@ -483,7 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
           cell.className = "element-input";
           cell.style.border = "1px solid transparent";
           const value = createdObjects[name].get(i, j);
-          cell.textContent = value;
+          cell.textContent = Number.isInteger(value) ? value : value.toFixed(2);
           displayGrid.appendChild(cell);
         }
       }
@@ -493,7 +492,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cell.className = "element-input";
         cell.style.border = "1px solid transparent";
         const value = createdObjects[name].get(i);
-        cell.textContent = value;
+        cell.textContent = Number.isInteger(value) ? value : value.toFixed(2);
         displayGrid.appendChild(cell);
       }
     }
